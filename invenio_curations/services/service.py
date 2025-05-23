@@ -78,6 +78,26 @@ class CurationRequestService:
 
         return next(results.hits)
 
+    def not_curations_request(self, identity, record):
+        """Check if the record is part of a curation request."""
+        topic_reference = ResolverRegistry.reference_entity(record)
+        # Assume there is only one item in the reference dict
+        topic_key, topic_value = next(iter(topic_reference.items()))
+
+        results = self.requests_service.search(
+            identity,
+            extra_filter=dsl.query.Bool(
+                "must",
+                must=[
+                    dsl.Q("term", **{"topic.{}".format(topic_key): topic_value}),
+                ],
+                must_not=[
+                    dsl.Q("term", **{"type": self.request_type_cls.type_id}),
+                ],
+            ),
+        )
+        return next(results.hits) if results.total > 0 else None
+    
     def accepted_record(self, identity, record):
         """Check if current version of record has been accepted."""
         topic_reference = ResolverRegistry.reference_entity(record)

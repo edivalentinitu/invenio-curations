@@ -9,7 +9,7 @@ import React from "react";
 import { http } from "react-invenio-forms";
 import { Card, Form, Grid } from "semantic-ui-react";
 import PropTypes from "prop-types";
-import { DepositStatusBox, SaveButton, PreviewButton } from "@js/invenio_rdm_records";
+import { DepositStatusBox, SaveButton, PreviewButton, PublishButton } from "@js/invenio_rdm_records";
 import { ShareDraftButton } from "@js/invenio_app_rdm/deposit/ShareDraftButton";
 import { RequestOrPublishButton } from "./RequestOrPublishButton";
 import { connect } from "react-redux";
@@ -141,6 +141,7 @@ export class DepositBoxComponent extends React.Component {
   checkShouldFetchCurationRequest = async () => {
     // Fetch curation request instantly when record was updated from an external component
     const { lastFetchedAt } = this.state;
+
     if (lastFetchedAt < this.record.updated) {
       this.resetInterval();
       this.fetchCurationRequest();
@@ -171,6 +172,7 @@ export class DepositBoxComponent extends React.Component {
               </Grid.Column>
 
               <Grid.Column width={16} className="pt-10 pb-10">
+                {document.getElementById("remove-community-button") === null ? (
                 <RequestOrPublishButton
                   request={latestRequest}
                   record={record}
@@ -185,6 +187,12 @@ export class DepositBoxComponent extends React.Component {
                     await this.resubmitCurationRequest();
                   }}
                 />
+                ) : (
+                   <PublishButton
+                    fluid 
+                    record={record}
+                    />
+                )}
               </Grid.Column>
 
               <Grid.Column width={16} className="pt-0">

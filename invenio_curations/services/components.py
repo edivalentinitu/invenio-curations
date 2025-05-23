@@ -38,6 +38,9 @@ class CurationComponent(ServiceComponent, ABC):
         if has_been_published and current_curations_service.allow_publishing_edits:
             return
 
+        if current_curations_service.not_curations_request(system_identity, draft):
+            return
+        
         review_accepted = current_curations_service.accepted_record(
             system_identity,
             draft,
