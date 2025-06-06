@@ -7,8 +7,15 @@
 
 """Proxies for accessing the currently instantiated curations extension."""
 
+from typing import TypeVar, cast
+
 from flask import current_app
 from werkzeug.local import LocalProxy
+
+
+def unproxy[T](obj) -> T:
+    return cast(T, obj)
+
 
 current_curations = LocalProxy(lambda: current_app.extensions["invenio-curations"])
 """Proxy for the instantiated curations extension."""
