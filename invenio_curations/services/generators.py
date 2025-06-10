@@ -22,8 +22,6 @@ from invenio_requests.records.api import Request
 from ..proxies import current_curations_service, unproxy
 from .service import CurationRequestService
 
-curations_service: CurationRequestService = unproxy(current_curations_service)
-
 
 class IfRequestTypes(ConditionalGenerator):
     """Request-oriented generator checking for requests of certain types."""
@@ -51,6 +49,8 @@ class IfRequestTypes(ConditionalGenerator):
 class IfCurationRequestAccepted(ConditionalGenerator):
     """Request-oriented generator checking if a curation request has been accepted."""
 
+    _curations_service: CurationRequestService = unproxy(current_curations_service)
+
     def __init__(
         self,
         record_access_func: Callable[
@@ -68,7 +68,7 @@ class IfCurationRequestAccepted(ConditionalGenerator):
         if request is not None:
             record_to_curate = self.record_access_func(request)
             return (
-                curations_service.accepted_record(system_identity, record_to_curate)
+                self._curations_service.accepted_record(system_identity, record_to_curate)
                 is not None
             )
 
@@ -147,20 +147,23 @@ class TopicPermission(EntityReferenceServicePermission):
 
 class CurationModerators(Generator):
     """Permission generator that allows users with the `moderation` role."""
+    _curations_service: CurationRequestService = unproxy(current_curations_service)
 
     def needs(self, **kwargs: Any) -> list[Need]:
         """Allow access for the moderation role."""
-        return [RoleNeed(curations_service.moderation_role_name)]
+        return [RoleNeed(self._curations_service.moderation_role_name)]
 
 
 class IfCurationRequestExists(ConditionalGenerator):
     """Record-oriented generator checking if a curation request exists."""
 
+    _curations_service: CurationRequestService = unproxy(current_curations_service)
+
     def _condition(self, record: RDMDraft | None = None, **kwargs: Any) -> bool:
         """Check if the record has a curation request or not."""
         if record is not None:
             # We use the system identity here to avoid visibility issues
-            request = curations_service.get_review(
+            request = self._curations_service.get_review(
                 identity=system_identity, topic=record
             )
             return request is not None

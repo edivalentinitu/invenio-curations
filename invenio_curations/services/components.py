@@ -24,15 +24,14 @@ from invenio_requests.services import RequestsService
 from ..proxies import current_curations_service, unproxy
 from . import CurationRequestService
 
-curations_service: CurationRequestService = unproxy(current_curations_service)
-requests_service: RequestsService = unproxy(current_requests_service)
-
-
 from .errors import CurationRequestNotAccepted
 
 
 class CurationComponent(ServiceComponent, ABC):
     """Service component for access integration."""
+
+    _curations_service: CurationRequestService = unproxy(current_curations_service)
+    _requests_service: RequestsService = unproxy(current_requests_service)
 
     def publish(
         self,
@@ -48,15 +47,15 @@ class CurationComponent(ServiceComponent, ABC):
         # Thus, if we spot a discrepancy here we can deduce that this is the first time
         # the record gets published.
         if draft is None:
-            raise Exception("Unexpected publish action with undefined draft.")
+            raise RuntimeError("Unexpected publish action with undefined draft.")
 
         has_been_published = (
             draft.pid.status == draft["pid"]["status"] == PIDStatus.REGISTERED  # type: ignore
         )
-        if has_been_published and curations_service.allow_publishing_edits:
+        if has_been_published and self._curations_service.allow_publishing_edits:
             return
 
-        review_accepted = curations_service.accepted_record(
+        review_accepted = self._curations_service.accepted_record(
             system_identity,
             draft,
         )
@@ -72,7 +71,7 @@ class CurationComponent(ServiceComponent, ABC):
         force: bool = False,
     ) -> None:
         """Delete a draft."""
-        request = curations_service.get_review(
+        request = self._curations_service.get_review(
             system_identity,
             draft,
             expand=True,
@@ -84,12 +83,12 @@ class CurationComponent(ServiceComponent, ABC):
 
         # New record or new version -> request can be removed.
         if record is None:
-            requests_service.delete(system_identity, request["id"], uow=self.uow)
+            self._requests_service.delete(system_identity, request["id"], uow=self.uow)
             return
 
         # Delete draft for a published record.
         # Since only one request per record should exist, it is not deleted. Instead, put it back to accepted.
-        requests_service.execute_action(
+        self._requests_service.execute_action(
             system_identity, request["id"], "cancel", uow=self.uow
         )
 
@@ -110,7 +109,7 @@ class CurationComponent(ServiceComponent, ABC):
             )
             # Using system identity, to not have to update the default request can_update permission.
             # Data will be checked in the requests service.
-            requests_service.update(
+            self._requests_service.update(
                 system_identity, request["id"], request, uow=self.uow
             )
 
@@ -123,10 +122,10 @@ class CurationComponent(ServiceComponent, ABC):
     ) -> None:
         """Update draft handler."""
         has_published_record = record is not None and record.is_published
-        if has_published_record and curations_service.allow_publishing_edits:
+        if has_published_record and self._curations_service.allow_publishing_edits:
             return
 
-        request = curations_service.get_review(
+        request = self._curations_service.get_review(
             system_identity,
             record,
             expand=True,
@@ -183,6 +182,6 @@ class CurationComponent(ServiceComponent, ABC):
 
         # Request is closed but draft was updated with new data. Put back for review
         if diff_list:
-            requests_service.execute_action(
+            self._requests_service.execute_action(
                 identity, request["id"], "resubmit", uow=self.uow
             )

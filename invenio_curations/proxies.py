@@ -7,7 +7,7 @@
 
 """Proxies for accessing the currently instantiated curations extension."""
 
-from typing import TypeVar, cast
+from typing import cast
 
 from flask import current_app
 from werkzeug.local import LocalProxy

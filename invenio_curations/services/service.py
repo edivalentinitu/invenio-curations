@@ -31,12 +31,12 @@ from ..proxies import unproxy
 from ..requests import CurationRequest
 from .errors import OpenRecordCurationRequestAlreadyExists, RoleNotFound
 
-request_type_registry: TypeRegistry = unproxy(current_request_type_registry)
-datastore: SQLAlchemyUserDatastore = unproxy(current_datastore)
-
 
 class CurationRequestService:
     """Service for User Moderation requests."""
+
+    _request_type_registry: TypeRegistry = unproxy(current_request_type_registry)
+    _datastore: SQLAlchemyUserDatastore = unproxy(current_datastore)
 
     def __init__(self, requests_service: RequestsService, **kwargs: Any) -> None:
         """Service initialisation as a sub-service of requests."""
@@ -62,12 +62,12 @@ class CurationRequestService:
     @property
     def moderation_role(self) -> str:
         """Get the configured ``CURATIONS_MODERATION_ROLE`` role."""
-        return datastore.find_role(self.moderation_role_name)
+        return self._datastore.find_role(self.moderation_role_name)
 
     @property
     def request_type_cls(self) -> type[RequestType]:
         """Curation request type."""
-        return request_type_registry.lookup(CurationRequest.type_id)
+        return self._request_type_registry.lookup(CurationRequest.type_id)
 
     def get_review(
         self, identity: Identity, topic: Any, **kwargs: Any
