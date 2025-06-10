@@ -12,11 +12,15 @@ from flask import g
 from flask_menu import current_menu
 from invenio_i18n import lazy_gettext as _
 from invenio_requests.proxies import current_requests_service
+from invenio_requests.services import RequestsService
 
 from . import config
+from .proxies import unproxy
 from .resources import CurationsResource, CurationsResourceConfig
 from .services import CurationRequestService, CurationsServiceConfig
 from .views.ui import user_has_curations_management_role
+
+requests_service: RequestsService = unproxy(current_requests_service)
 
 
 def finalize_app(app):
@@ -72,7 +76,7 @@ class InvenioCurations(object):
 
         self.curations_service = CurationRequestService(
             config=service_configs.curations,
-            requests_service=current_requests_service,
+            requests_service=requests_service,
         )
 
     def init_resources(self, app):

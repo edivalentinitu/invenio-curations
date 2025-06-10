@@ -47,6 +47,9 @@ class CurationComponent(ServiceComponent, ABC):
         # only gets updated via `record.commit()` (which is performed by the `uow`).
         # Thus, if we spot a discrepancy here we can deduce that this is the first time
         # the record gets published.
+        if draft is None:
+            raise Exception("Unexpected publish action with undefined draft.")
+
         has_been_published = (
             draft.pid.status == draft["pid"]["status"] == PIDStatus.REGISTERED  # type: ignore
         )
