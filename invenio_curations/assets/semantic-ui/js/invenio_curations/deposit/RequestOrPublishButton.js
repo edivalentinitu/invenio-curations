@@ -13,12 +13,18 @@ import PropTypes from "prop-types";
 import { i18next } from "@translations/invenio_curations/i18next";
 
 export const RequestOrPublishButton = (props) => {
-  const { request, record, handleCreateRequest, handleResubmitRequest, loading } =
+  const { request, record, permissions, handleCreateRequest, handleResubmitRequest, loading } =
     props;
   const recordCurateable = record?.id != null && record?.savedSuccessfully;
   let elem = null;
+  
+  const fullPermission = Object.values(permissions).every(value => value === true);
 
-  if (request) {
+  if (fullPermission) {
+    // admin users can directly publish records
+    elem = <PublishButton fluid disabled={false} record={record} />;
+  }
+  else if (request) {
     switch (request.status) {
       case "accepted":
         elem = <PublishButton fluid record={record} />;
@@ -100,6 +106,7 @@ export const RequestOrPublishButton = (props) => {
 RequestOrPublishButton.propTypes = {
   request: PropTypes.object,
   record: PropTypes.object,
+  permissions: PropTypes.object,
   handleCreateRequest: PropTypes.func.isRequired,
   handleResubmitRequest: PropTypes.func.isRequired,
   loading: PropTypes.bool,
@@ -108,5 +115,6 @@ RequestOrPublishButton.propTypes = {
 RequestOrPublishButton.defaultProps = {
   request: null,
   record: null,
+  permissions: null,
   loading: false,
 };

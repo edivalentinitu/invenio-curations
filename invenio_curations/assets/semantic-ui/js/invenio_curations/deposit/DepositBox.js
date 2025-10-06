@@ -191,6 +191,7 @@ export class DepositBoxComponent extends React.Component {
                   request={latestRequest}
                   record={record}
                   loading={this.loading}
+                  permissions={permissions}
                   handleCreateRequest={async (event) => {
                     this.handleSave(event);
                     await this.fetchCurationRequest();
