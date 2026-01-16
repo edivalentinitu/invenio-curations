@@ -29,7 +29,7 @@ export const RequestOrPublishButton = (props) => {
   // - record is published && user edits it && allow_publishing_edits=false => action
   // is rather a "resubmit" than a "publish"
   if (curationsData?.is_privileged) {
-    elem = <PublishButton fluid record={record} />;
+    elem = <PublishButton fluid record={record} disabled={!recordCurateable} />;
     return elem;
   }
   if (
